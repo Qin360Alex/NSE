@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #f3f5f0;
+  --color-ink: #12241c;
+  --color-muted: #3e5348;
+  --color-line: #d5ddd4;
+  --color-green: #085c32;
+  --color-pine: #083526;
+  --color-gold: #e2b04a;
+  --color-goldink: #1c1508;
+  --color-foam: #e7f2eb;
+}
+
+@theme inline {
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: #e2b04a;
+  color: #1c1508;
+}
+
+:focus-visible {
+  outline: 2px solid #7a5a16;
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 80;
+  border-radius: 999px;
+  background: white;
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+.link {
+  color: var(--color-green);
+  text-underline-offset: 3px;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+#briefing,
+.anchor {
+  scroll-margin-top: 6rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+@media print {
+  .sticky,
+  footer,
+  button {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+  }
+}

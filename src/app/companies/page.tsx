@@ -37,13 +37,13 @@ export default function CompaniesPage() {
       <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
         <CompanyBrowser rows={rows} segments={segments} />
         <noscript>
-          <ul className="mt-8 space-y-2">
+          <ul className="mt-8 space-y-2 text-soft">
             {stocks
               .slice()
               .sort((a, b) => a.name.localeCompare(b.name))
               .map((stock) => (
                 <li key={stock.ticker}>
-                  <Link href={`/companies/${stock.ticker.toLowerCase()}`}>
+                  <Link className="link" href={`/companies/${stock.ticker.toLowerCase()}`}>
                     {stock.name} ({stock.ticker})
                   </Link>
                 </li>

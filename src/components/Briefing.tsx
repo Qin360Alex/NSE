@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { Icon } from "@/components/ui/Icon";
+
+const CHAPTER_SECONDS = 9;
 
 const chapters = [
   {
@@ -34,93 +37,134 @@ export function Briefing() {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const chapter = chapters[index];
-
-  useEffect(() => {
-    if (!playing) return;
-    if (!motionAllowed()) return;
-    const timer = window.setTimeout(() => {
-      if (index >= chapters.length - 1) {
-        setPlaying(false);
-        return;
-      }
-      setIndex(index + 1);
-    }, 9000);
-    return () => window.clearTimeout(timer);
-  }, [playing, index]);
+  const last = chapters.length - 1;
 
   function go(next: number) {
-    setIndex(Math.min(Math.max(next, 0), chapters.length - 1));
+    setIndex(Math.min(Math.max(next, 0), last));
+  }
+
+  function onChapterEnd() {
+    if (index >= last) {
+      setPlaying(false);
+      return;
+    }
+    setIndex(index + 1);
+  }
+
+  function togglePlay() {
+    if (!motionAllowed()) {
+      go(index >= last ? 0 : index + 1);
+      return;
+    }
+    if (!playing && index === last) setIndex(0);
+    setPlaying((value) => !value);
   }
 
   return (
-    <section id="briefing" aria-labelledby="briefing-title" className="scroll-mt-24 rounded-[2rem] bg-pine p-5 text-white sm:p-8">
+    <section
+      id="briefing"
+      aria-labelledby="briefing-title"
+      className="lit relative overflow-hidden rounded-4xl p-6 sm:p-8"
+    >
       <div className="flex items-center justify-between gap-4">
-        <p className="text-xs font-semibold tracking-[0.18em] text-gold uppercase">One-minute briefing</p>
-        <p className="text-xs text-white/70">
+        <p className="eyebrow">One-minute briefing</p>
+        <p className="font-mono text-xs text-muted tabular-nums">
           {String(index + 1).padStart(2, "0")} / {String(chapters.length).padStart(2, "0")}
         </p>
       </div>
-      <h2 id="briefing-title" className="mt-6 font-serif text-3xl leading-tight sm:text-4xl">
+      <h2 id="briefing-title" className="sr-only">
         The NSE in one minute
       </h2>
-      <div aria-live="polite" className="mt-6 min-h-40">
-        <p className="text-sm font-semibold text-gold">{chapter.kicker}</p>
-        <p className="mt-2 font-serif text-2xl leading-snug">{chapter.title}</p>
-        <p className="mt-4 max-w-xl text-base leading-relaxed text-white/85">{chapter.body}</p>
+
+      <div aria-live="polite" className="mt-8 min-h-62 sm:min-h-54">
+        <div key={index} className="fade-up">
+          <p className="text-sm font-medium text-gold">{chapter.kicker}</p>
+          <p className="mt-2 font-display text-[1.65rem] leading-tight font-semibold tracking-tight sm:text-3xl">
+            {chapter.title}
+          </p>
+          <p className="mt-4 max-w-xl text-[0.97rem] leading-relaxed text-soft">{chapter.body}</p>
+        </div>
       </div>
-      <div className="mt-6 flex gap-2" aria-hidden="true">
+
+      <div className="mt-6 grid grid-cols-4 gap-2" aria-hidden="true">
         {chapters.map((item, itemIndex) => (
-          <span
-            key={item.kicker}
-            className={`h-1 flex-1 rounded-full ${itemIndex <= index ? "bg-gold" : "bg-white/20"}`}
-          />
+          <span key={item.kicker} className="h-1 overflow-hidden rounded-full bg-white/10">
+            {itemIndex < index ? (
+              <span className="briefing-fill w-full! animate-none!" />
+            ) : itemIndex === index ? (
+              <span
+                key={`fill-${index}`}
+                className="briefing-fill"
+                style={{
+                  animationDuration: `${CHAPTER_SECONDS}s`,
+                  animationPlayState: playing ? "running" : "paused",
+                }}
+                onAnimationEnd={onChapterEnd}
+              />
+            ) : null}
+          </span>
         ))}
       </div>
+
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <button
           type="button"
-          className="inline-flex h-12 items-center rounded-full bg-gold px-5 text-sm font-semibold text-goldink"
-          onClick={() => {
-            if (!motionAllowed()) {
-              go(index >= chapters.length - 1 ? 0 : index + 1);
-              return;
-            }
-            if (index === chapters.length - 1 && !playing) {
-              setIndex(0);
-            }
-            setPlaying((value) => !value);
-          }}
+          onClick={togglePlay}
+          className="grid h-14 w-14 place-items-center rounded-full bg-ice text-ink shadow-[0_0_0_1px_rgb(168_219_255/0.45),0_10px_32px_-8px_rgb(111_189_242/0.7)] transition-transform hover:scale-105"
+          aria-label={playing ? "Pause briefing" : "Play briefing"}
         >
-          {playing ? "Pause" : "Play briefing"}
+          <Icon name={playing ? "pause" : "play"} className="h-6 w-6" />
         </button>
         <button
           type="button"
-          className="inline-flex h-12 items-center rounded-full border border-white/25 px-4 text-sm font-semibold disabled:opacity-40"
+          className="icon-btn"
+          aria-label="Previous chapter"
           onClick={() => {
             setPlaying(false);
             go(index - 1);
           }}
           disabled={index === 0}
         >
-          Previous
+          <Icon name="chevronLeft" />
         </button>
         <button
           type="button"
-          className="inline-flex h-12 items-center rounded-full border border-white/25 px-4 text-sm font-semibold disabled:opacity-40"
+          className="icon-btn"
+          aria-label="Next chapter"
           onClick={() => {
             setPlaying(false);
             go(index + 1);
           }}
-          disabled={index === chapters.length - 1}
+          disabled={index === last}
         >
-          Next
+          <Icon name="chevronRight" />
         </button>
-        <Link href="/markets" className="inline-flex h-12 items-center text-sm font-semibold text-gold">
+        <Link href="/markets" className="btn btn-quiet ml-auto">
           Continue to the markets
+          <Icon name="arrowRight" className="h-4 w-4" />
         </Link>
       </div>
-      <p className="mt-6 text-xs leading-relaxed text-white/60">
-        A filmed version can replace this frame. The words are the lesson either way, so the briefing stays readable with the sound off.
+
+      <ol className="mt-6 flex flex-wrap gap-2" aria-label="Chapters">
+        {chapters.map((item, itemIndex) => (
+          <li key={item.kicker}>
+            <button
+              type="button"
+              aria-current={itemIndex === index ? "step" : undefined}
+              onClick={() => {
+                setPlaying(false);
+                go(itemIndex);
+              }}
+              className={`chip transition-colors ${itemIndex === index ? "chip-ice" : "hover:text-fg"}`}
+            >
+              {item.kicker}
+            </button>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-6 text-xs leading-relaxed text-faint">
+        The words are the lesson, so the briefing reads fine with the sound off. A filmed version can replace this frame
+        later.
       </p>
     </section>
   );

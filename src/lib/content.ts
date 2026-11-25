@@ -1,5 +1,6 @@
 import { glossary } from "./glossary";
 import { getLesson, lessonNeighbors, lessons } from "./lessons";
+import { stages } from "./path";
 import { getMarket, markets } from "./markets";
 import { featuredTickers, getStock, stocks } from "./stocks";
 
@@ -29,6 +30,18 @@ const marketSlugs = new Set(markets.map((market) => market.slug));
 for (const stock of stocks) {
   if (!marketSlugs.has(stock.segment)) {
     throw new Error(`Unknown segment ${stock.segment} on ${stock.ticker}`);
+  }
+}
+
+const staged = stages.flatMap((stage) => stage.lessons);
+for (const lesson of lessons) {
+  if (staged.filter((slug) => slug === lesson.slug).length !== 1) {
+    throw new Error(`Lesson "${lesson.slug}" must sit in exactly one path stage`);
+  }
+}
+for (const slug of staged) {
+  if (!lessonSlugs.has(slug)) {
+    throw new Error(`Path stage names unknown lesson "${slug}"`);
   }
 }
 

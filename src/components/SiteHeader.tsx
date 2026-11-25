@@ -3,14 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { SwathLogo } from "@/components/brand/SwathMark";
 import { SearchDialog } from "@/components/SearchDialog";
+import { Icon, type IconName } from "@/components/ui/Icon";
+import { SEARCH_EVENT } from "@/lib/nina";
 
-const links = [
-  { href: "/learn", label: "Learn" },
-  { href: "/markets", label: "Markets" },
-  { href: "/companies", label: "Companies" },
-  { href: "/glossary", label: "Glossary" },
-  { href: "/about", label: "About" },
+const links: { href: string; label: string; icon: IconName }[] = [
+  { href: "/learn", label: "Learn", icon: "book" },
+  { href: "/markets", label: "Markets", icon: "layers" },
+  { href: "/companies", label: "Companies", icon: "bank" },
+  { href: "/glossary", label: "Glossary", icon: "type" },
+  { href: "/desk", label: "Desk", icon: "desk" },
 ];
 
 function isCurrent(path: string, href: string) {
@@ -19,9 +22,7 @@ function isCurrent(path: string, href: string) {
 
 export function SiteHeader() {
   const path = usePathname();
-  const [menuPath, setMenuPath] = useState<string | null>(null);
   const [searchPath, setSearchPath] = useState<string | null>(null);
-  const menuOpen = menuPath === path;
   const searchOpen = searchPath === path;
 
   useEffect(() => {
@@ -33,88 +34,86 @@ export function SiteHeader() {
       }
       if (event.key === "/" || ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k")) {
         event.preventDefault();
-        setMenuPath(null);
         setSearchPath(path);
       }
     }
+    function onOpen() {
+      setSearchPath(path);
+    }
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener(SEARCH_EVENT, onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener(SEARCH_EVENT, onOpen);
+    };
   }, [path]);
 
   return (
-    <div className="sticky top-0 z-40">
-      <header className="border-b border-line bg-paper/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-5 py-3 sm:px-8">
-          <Link href="/" className="flex items-center gap-3 rounded-xl">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-pine font-serif text-lg text-gold" aria-hidden="true">
-              S
-            </span>
-            <span>
-              <span className="block font-serif text-xl leading-none">Swath</span>
-              <span className="block text-xs text-muted">NSE study desk</span>
-            </span>
-          </Link>
-          <nav className="ml-auto hidden items-center gap-6 lg:flex" aria-label="Primary">
-            {links.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={isCurrent(path, item.href) ? "page" : undefined}
-                className={`text-sm font-semibold ${isCurrent(path, item.href) ? "text-green underline decoration-gold decoration-2 underline-offset-8" : "text-ink"}`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="ml-auto flex items-center gap-2 lg:ml-4">
-            <button
-              type="button"
-              className="inline-flex h-11 items-center gap-2 rounded-full border border-line bg-white px-4 text-sm font-semibold text-ink"
-              aria-expanded={searchOpen}
-              aria-controls="swath-search-dialog"
-              onClick={() => {
-                setMenuPath(null);
-                setSearchPath(path);
-              }}
-            >
-              Search
-              <kbd className="hidden rounded border border-line px-1.5 py-0.5 text-xs text-muted sm:inline">/</kbd>
-            </button>
-            <button
-              type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-white lg:hidden"
-              aria-expanded={menuOpen}
-              aria-controls="mobile-nav"
-              onClick={() => setMenuPath(menuOpen ? null : path)}
-            >
-              <span className="sr-only">{menuOpen ? "Close menu" : "Open menu"}</span>
-              <span aria-hidden="true" className="text-lg leading-none">
-                {menuOpen ? "×" : "☰"}
-              </span>
-            </button>
-          </div>
-        </div>
-        {menuOpen ? (
-          <nav id="mobile-nav" className="border-t border-line px-5 py-2 lg:hidden" aria-label="Mobile">
-            {links.map((item) => (
+    <>
+      <div className="site-chrome sticky top-0 z-40">
+        <header className="header-glass">
+          <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-5 sm:px-8">
+            <Link href="/" className="flex shrink-0 items-center rounded-xl" aria-label="Swath home">
+              <SwathLogo />
+            </Link>
+            <span className="edu-tag hidden sm:inline-flex">Education only</span>
+            <nav className="ml-auto hidden items-center gap-7 lg:flex" aria-label="Primary">
+              {links.map((item) => (
                 <Link
-                key={item.href}
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isCurrent(path, item.href) ? "page" : undefined}
+                  className="nav-link"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+            <div className="ml-auto flex items-center gap-2 lg:ml-6">
+              <button
+                type="button"
+                className="inline-flex h-10 items-center gap-2.5 rounded-xl border border-hair-strong bg-white/2 px-3 text-sm text-muted transition-colors hover:border-ice/50 hover:text-fg"
+                aria-expanded={searchOpen}
+                aria-controls="swath-search-dialog"
+                aria-label="Search the study notes"
+                onClick={() => setSearchPath(path)}
+              >
+                <Icon name="search" className="h-4 w-4" />
+                <span className="hidden sm:inline">Search notes</span>
+                <kbd className="key hidden sm:inline-grid">/</kbd>
+              </button>
+              <Link href="/learn" className="btn btn-primary btn-sm hidden md:inline-flex">
+                Start learning
+              </Link>
+            </div>
+          </div>
+        </header>
+        {searchOpen ? (
+          <div id="swath-search-dialog">
+            <SearchDialog onClose={() => setSearchPath(null)} />
+          </div>
+        ) : null}
+      </div>
+      <nav
+        className="site-chrome tabbar fixed inset-x-0 bottom-0 z-40 lg:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        aria-label="Primary"
+      >
+        <ul className="mx-auto grid max-w-lg grid-cols-5">
+          {links.map((item) => (
+            <li key={item.href}>
+              <Link
                 href={item.href}
                 aria-current={isCurrent(path, item.href) ? "page" : undefined}
-                className="block py-3 text-lg font-semibold"
-                onClick={() => setMenuPath(null)}
+                className="tab-link"
               >
+                <Icon name={item.icon} className="h-5 w-5" />
                 {item.label}
               </Link>
-            ))}
-          </nav>
-        ) : null}
-      </header>
-      {searchOpen ? (
-        <div id="swath-search-dialog">
-          <SearchDialog onClose={() => setSearchPath(null)} />
-        </div>
-      ) : null}
-    </div>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </>
   );
 }

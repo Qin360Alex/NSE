@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { Blocks } from "@/components/Blocks";
 import { PageIntro } from "@/components/PageIntro";
 import { Sources } from "@/components/Sources";
+import { StudyStrip } from "@/components/StudyStrip";
+import { Icon } from "@/components/ui/Icon";
 import { getMarket, markets, stocks } from "@/lib/content";
 
 export function generateStaticParams() {
@@ -30,11 +32,13 @@ export default async function MarketPage({
   const market = getMarket(slug);
   if (!market) notFound();
   const names = stocks.filter((stock) => stock.segment === market.slug).sort((a, b) => a.name.localeCompare(b.name));
+  const position = markets.findIndex((item) => item.slug === market.slug);
+  const sectors = new Set(names.map((stock) => stock.sector)).size;
 
   return (
     <>
       <PageIntro
-        kicker={market.short}
+        kicker={`Shelf ${position + 1} of ${markets.length} · ${market.short}`}
         title={market.name}
         lede={market.summary}
         crumbs={[
@@ -42,38 +46,67 @@ export default async function MarketPage({
           { href: "/markets", label: "Markets" },
           { label: market.short },
         ]}
+        aside={
+          <dl className="glass grid grid-cols-2 gap-px overflow-hidden rounded-3xl">
+            <div className="p-5">
+              <dt className="text-xs text-muted">Study names</dt>
+              <dd className="mt-1 font-display text-3xl font-semibold tabular-nums">
+                {market.slug === "fixed-income" ? "–" : names.length}
+              </dd>
+            </div>
+            <div className="p-5">
+              <dt className="text-xs text-muted">Sectors</dt>
+              <dd className="mt-1 font-display text-3xl font-semibold tabular-nums">
+                {market.slug === "fixed-income" ? "–" : sectors}
+              </dd>
+            </div>
+            <div className="col-span-2 border-t border-hair p-5">
+              <dt className="text-xs text-muted">Reading order</dt>
+              <dd className="mt-1 text-sm text-soft">
+                {position === 0 ? "Start here" : `After ${markets[position - 1].short}`}
+              </dd>
+            </div>
+          </dl>
+        }
       />
       <article className="mx-auto max-w-3xl px-5 py-12 sm:px-8">
         <Blocks blocks={market.blocks} />
         <Sources sources={market.sources} />
       </article>
       {names.length > 0 ? (
-        <section className="border-t border-line" aria-labelledby="names-heading">
-          <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
-            <h2 id="names-heading" className="font-serif text-3xl">Study names on this shelf</h2>
-            <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {names.map((stock) => (
-                <li key={stock.ticker}>
-                  <Link href={`/companies/${stock.ticker.toLowerCase()}`} className="block rounded-3xl border border-line bg-white p-4">
-                    <span className="text-xs font-semibold text-green">{stock.ticker}</span>
-                    <span className="mt-1 block font-semibold">{stock.name}</span>
-                    <span className="mt-2 block text-sm text-muted">{stock.sector}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+        <section className="border-t border-hair" aria-labelledby="names-heading">
+          <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8">
+            <p className="eyebrow">On this shelf</p>
+            <h2 id="names-heading" className="display-md mt-3">
+              Study names
+            </h2>
+            <div className="mt-8">
+              <StudyStrip
+                variant="grid"
+                rows={names.map((stock) => ({
+                  ticker: stock.ticker,
+                  name: stock.name,
+                  sector: stock.sector,
+                  segment: market.short,
+                }))}
+              />
+            </div>
           </div>
         </section>
       ) : (
-        <section className="border-t border-line">
-          <div className="mx-auto max-w-3xl px-5 py-12 sm:px-8">
-            <h2 className="font-serif text-3xl">No share list on this shelf</h2>
-            <p className="mt-3 leading-relaxed text-muted">
-              Bonds stay off the company browser so they are not mistaken for ordinary shares. The Central Bank of Kenya publishes government securities. The NSE publishes the fixed income market.
-            </p>
-            <Link href="/companies" className="link mt-6 inline-block font-semibold">
-              Back to ordinary shares
-            </Link>
+        <section className="border-t border-hair">
+          <div className="mx-auto max-w-3xl px-5 py-14 sm:px-8">
+            <div className="glass rounded-3xl p-7">
+              <h2 className="font-display text-2xl font-semibold">No share list on this shelf</h2>
+              <p className="mt-3 leading-relaxed text-muted">
+                Bonds stay off the company browser so they are not mistaken for ordinary shares. The Central Bank of
+                Kenya publishes government securities. The NSE publishes the fixed income market.
+              </p>
+              <Link href="/companies" className="btn btn-ghost btn-sm mt-6">
+                Back to ordinary shares
+                <Icon name="arrowRight" className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </section>
       )}
